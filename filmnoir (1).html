@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FilmNoir – Lấy Số Thứ Tự</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;
+  --bg2:#f7f7f7;
+  --bg3:#f0f0f0;
+  --bg4:#e8e8e8;
+  --border:#e0e0e0;
+  --border2:#d0d0d0;
+  --border3:#bbb;
+  --red:#7b1f3a;
+  --red2:#9a2647;
+  --red-faint:rgba(123,31,58,0.07);
+  --red-border:rgba(123,31,58,0.22);
+  --text:#111111;
+  --text2:#444444;
+  --text3:#888888;
+  --text4:#bbb;
+  --green:#1a8a3a;
+  --r:4px;
+  --shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif;font-weight:400;font-size:13px;letter-spacing:.02em;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:#f0f0f0}::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px}
+
+/* HEADER */
+.top-bar{background:#fff;border-bottom:2px solid var(--red);padding:20px 0 0;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.header-inner{text-align:center;padding-bottom:16px}
+.online-pill{display:inline-flex;align-items:center;gap:5px;font-size:9px;letter-spacing:.18em;color:var(--green);text-transform:uppercase;margin-bottom:10px;font-weight:500}
+.online-pill::before{content:'●';font-size:10px;animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.brand{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:400;letter-spacing:.3em;color:var(--red);text-transform:uppercase;line-height:1}
+
+/* TABS */
+.tabs{display:flex;justify-content:center;border-top:1px solid var(--border)}
+.tab{flex:1;max-width:130px;background:none;border:none;color:var(--text3);padding:11px 4px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;position:relative;transition:color .2s;white-space:nowrap}
+.tab.on{color:var(--red);font-weight:600}
+.tab.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--red)}
+.tab:hover:not(.on){color:var(--text2)}
+
+/* LAYOUT */
+.wrap{max-width:460px;margin:0 auto;padding:0 16px 80px}
+.section{padding:28px 0 0}
+.divider{display:flex;align-items:center;gap:10px;color:var(--text3);font-size:13px;margin:0 0 22px;letter-spacing:.15em}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;letter-spacing:.12em;color:var(--red);text-align:center;margin-bottom:6px}
+.sec-note{text-align:center;color:var(--text2);font-size:11px;line-height:1.7;margin-bottom:24px}
+
+/* FORM */
+.fgroup{margin-bottom:15px}
+.flabel{display:block;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text2);margin-bottom:7px;font-weight:600}
+.finput,.fselect{width:100%;background:#fff;border:1px solid var(--border2);color:var(--text);padding:11px 13px;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:400;border-radius:var(--r);outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none}
+.finput::placeholder{color:var(--text4)}
+.finput:focus,.fselect:focus{border-color:var(--red-border);box-shadow:0 0 0 3px var(--red-faint)}
+.fselect option{background:#fff;color:var(--text)}
+.select-wrap{position:relative}
+.select-wrap::after{content:'▾';position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;font-size:12px}
+
+/* PAYMENT */
+.pay-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pay-opt{background:#fff;border:1px solid var(--border2);color:var(--text2);padding:13px 10px;border-radius:var(--r);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:400;letter-spacing:.06em;transition:all .2s}
+.pay-opt .icon{font-size:22px}
+.pay-opt.on{border-color:var(--red-border);color:var(--red);background:var(--red-faint);font-weight:600}
+.pay-opt:hover:not(.on){border-color:var(--border3);color:var(--text)}
+
+/* BUTTONS */
+.btn-main{width:100%;background:var(--red);color:#fff;border:none;padding:13px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;border-radius:var(--r);transition:background .2s;margin-top:8px}
+.btn-main:hover{background:var(--red2)}
+.btn-main:disabled{background:#ccc;color:#999;cursor:default}
+.btn-out{width:100%;background:transparent;border:1px solid var(--border2);color:var(--text2);padding:11px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;border-radius:var(--r);transition:all .2s;margin-top:8px}
+.btn-out:hover{border-color:var(--border3);color:var(--text)}
+.btn-del{background:transparent;border:1px solid var(--red);color:var(--red);padding:9px 16px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border-radius:var(--r);transition:all .2s;white-space:nowrap}
+.btn-del:hover{background:var(--red-faint)}
+.btn-sm{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:7px 13px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:400;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:var(--r);transition:all .2s;white-space:nowrap}
+.btn-sm:hover{border-color:var(--border3);color:var(--text)}
+.btn-red-sm{background:var(--red);color:#fff;border:none;padding:7px 14px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;border-radius:var(--r);transition:background .2s;white-space:nowrap}
+.btn-red-sm:hover{background:var(--red2)}
+
+/* TICKET */
+.ticket-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:28px 20px 22px;text-align:center;display:none;animation:fadeUp .35s ease;margin-top:16px}
+.ticket-card.show{display:block}
+.ticket-micro{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.ticket-icon{font-size:30px;margin-bottom:10px}
+.ticket-num{font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:400;color:var(--red);line-height:1;letter-spacing:.04em}
+.ticket-room{font-size:11px;color:var(--text2);letter-spacing:.1em;margin-top:6px}
+.pay-notice{margin:16px 0 0;padding:12px 14px;background:rgba(192,21,42,.05);border:1px solid rgba(192,21,42,.2);border-radius:var(--r);font-size:11px;color:var(--red);line-height:1.6;letter-spacing:.04em}
+.wait-info{margin-top:10px;font-size:11px;color:var(--text2);letter-spacing:.05em}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* QUEUE */
+.room-block{margin-bottom:10px}
+.room-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.room-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:400;letter-spacing:.1em;color:var(--red)}
+.now-chip{background:var(--red-faint);border:1px solid var(--red-border);color:var(--red);font-size:9px;letter-spacing:.12em;padding:3px 10px;border-radius:100px;font-weight:600}
+.q-row{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.q-num{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--red);min-width:42px;line-height:1}
+.q-body{flex:1;min-width:0}
+.q-name{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.q-meta{font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.05em}
+.q-badge{font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:100px;white-space:nowrap;flex-shrink:0;font-weight:600}
+.b-wait{background:#f0f0f0;color:var(--text3);border:1px solid var(--border2)}
+.b-pending{background:rgba(192,21,42,.07);color:var(--red);border:1px solid var(--red-border)}
+.b-serve{background:rgba(26,138,58,.1);color:var(--green);border:1px solid rgba(26,138,58,.3)}
+.q-empty{text-align:center;color:var(--text3);font-size:11px;padding:18px 0;letter-spacing:.08em}
+
+/* LOOKUP */
+.lookup-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px 18px;display:none;animation:fadeUp .3s ease;margin-top:16px}
+.lookup-card.show{display:block}
+.lookup-num{font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:400;color:var(--red);text-align:center;line-height:1}
+.lookup-info{text-align:center;color:var(--text2);font-size:11px;margin-top:6px;letter-spacing:.06em}
+.lookup-stats{display:flex;margin:14px 0 0;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:#fff}
+.ls-item{flex:1;padding:13px 8px;text-align:center;border-right:1px solid var(--border)}
+.ls-item:last-child{border-right:none}
+.ls-val{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--red);line-height:1;font-weight:400}
+.ls-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;margin-top:4px}
+.lookup-btns{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+.lookup-btns .btn-out{margin-top:0;flex:1}
+.lookup-btns .btn-del{flex-shrink:0}
+
+/* CHANGE ROOM */
+.cr-panel{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-top:10px;display:none;animation:fadeUp .25s ease}
+.cr-panel.show{display:block}
+.cr-btns{display:flex;gap:8px;margin-top:10px}
+
+/* MANAGE */
+.manage-room{background:#fff;border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
+.manage-room-head{padding:13px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--red);background:var(--bg2)}
+.manage-room-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:400;letter-spacing:.1em;color:var(--red)}
+.manage-room-body{padding:14px 16px}
+.manage-q-row{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px}
+.manage-q-num{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--red);min-width:36px;font-weight:400;line-height:1}
+.manage-q-body{flex:1;min-width:0}
+.manage-q-name{font-size:12px;color:var(--text);font-weight:500}
+.manage-q-meta{font-size:10px;color:var(--text3);margin-top:2px}
+.manage-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn-serve{flex:1;background:var(--red);color:#fff;border:none;padding:10px 12px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;border-radius:var(--r);transition:background .2s;white-space:nowrap}
+.btn-serve:hover{background:var(--red2)}
+.btn-reset{background:transparent;border:1px solid var(--border2);color:var(--text3);padding:10px 12px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:400;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;border-radius:var(--r);transition:all .2s;white-space:nowrap}
+.btn-reset:hover{border-color:var(--red);color:var(--red)}
+
+/* CANCEL LOG */
+.log-title{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;font-weight:600}
+.log-item{background:var(--bg2);border:1px solid var(--border);padding:9px 13px;border-radius:var(--r);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;font-size:11px}
+.log-left{color:var(--text2)}
+.log-left strong{color:var(--text)}
+.log-right{color:var(--text3);font-size:10px;flex-shrink:0;margin-left:12px;text-align:right}
+
+/* STATS */
+.stats-lock-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:30px 20px;text-align:center}
+.stats-icon{font-size:32px;margin-bottom:14px}
+.stats-area{display:none;animation:fadeUp .3s ease}
+.stats-area.show{display:block}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.stats-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.stats-section-title{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);font-weight:600;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.stat-box{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;box-shadow:var(--shadow)}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--red);line-height:1;font-weight:400}
+.stat-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:3px;font-weight:600}
+.stat-sub{font-size:10px;color:var(--text2);margin-top:2px}
+.stat-bar{height:5px;border-radius:3px;margin-top:6px;background:#f0e8ec;overflow:hidden}
+.stat-bar-fill{height:100%;border-radius:3px;background:var(--red);transition:width .4s}
+.filter-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filter-bar .finput{flex:1;min-width:100px;padding:9px 11px}
+.hist-table{width:100%;border-collapse:collapse}
+.hist-table th{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);padding:8px 10px;border-bottom:2px solid var(--border);text-align:left;font-weight:600}
+.hist-table td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text2);font-size:11px;vertical-align:middle}
+.hist-table tr:last-child td{border-bottom:none}
+.hist-table td:first-child{color:var(--red);font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:400}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px)}
+.overlay.off{display:none}
+.modal{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:30px 26px 24px;width:300px;max-width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+.modal-icon{font-size:28px;margin-bottom:12px}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--red);letter-spacing:.1em;margin-bottom:4px}
+.modal-sub{font-size:11px;color:var(--text3);margin-bottom:18px;letter-spacing:.06em;line-height:1.6}
+.modal-err{color:var(--red);font-size:11px;margin-top:7px;display:none;letter-spacing:.04em}
+.modal-err.show{display:block}
+.modal-btns{display:flex;gap:8px;margin-top:14px}
+.modal-btns .btn-out{margin-top:0;flex:1}
+.modal-btns .btn-main{margin-top:0;flex:2}
+
+/* CONFIRM */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:250;backdrop-filter:blur(4px)}
+.confirm-overlay.off{display:none}
+.confirm-box{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:28px 24px 22px;width:290px;max-width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+.confirm-text{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:18px}
+.confirm-btns{display:flex;gap:8px}
+
+/* ERROR / MISC */
+.err-msg{color:var(--red);font-size:10px;margin-top:6px;letter-spacing:.05em;display:none}
+.err-msg.show{display:block}
+.page{display:none}.page.on{display:block}
+
+/* SPINNER */
+.spinner-wrap{display:flex;align-items:center;justify-content:center;padding:40px;gap:10px;color:var(--text3);font-size:11px;letter-spacing:.1em}
+.spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(12px);background:#fff;border:1px solid var(--border2);color:var(--text);padding:10px 18px;border-radius:var(--r);font-size:11px;letter-spacing:.06em;opacity:0;transition:all .3s;z-index:300;pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(26,138,58,.4);color:var(--green)}
+.toast.err{border-color:rgba(192,21,42,.4);color:var(--red)}
+</style>
+</head>
+<body>
+
+<div class="toast" id="T"></div>
+
+<!-- PASSWORD MODAL -->
+<div class="overlay off" id="passModal">
+  <div class="modal">
+    <div class="modal-icon">🔒</div>
+    <div class="modal-title">Khu Vực Quản Lý</div>
+    <div class="modal-sub">Chỉ dành cho nhân viên FilmNoir</div>
+    <input type="password" class="finput" id="mPass" placeholder="Mật khẩu..." onkeydown="if(event.key==='Enter')verifyPass()"/>
+    <div class="modal-err" id="mPassErr">Mật khẩu không đúng. Vui lòng thử lại.</div>
+    <div class="modal-btns">
+      <button class="btn-out" onclick="cancelPassModal()">Huỷ</button>
+      <button class="btn-main" onclick="verifyPass()">Xác Nhận</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay off" id="confirmDlg">
+  <div class="confirm-box">
+    <div class="confirm-text" id="confirmTxt"></div>
+    <div class="confirm-btns">
+      <button class="btn-out" style="flex:1;margin-top:0" onclick="confirmNo()">Huỷ</button>
+      <button class="btn-main" style="flex:2;margin-top:0" onclick="confirmYes()">Xác Nhận</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="top-bar">
+  <div class="header-inner">
+    <div class="online-pill">ONLINE</div>
+    <div class="brand">FilmNoir</div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" id="tab-book" onclick="go('book',this)">Đặt Lịch</button>
+    <button class="tab" id="tab-check" onclick="go('check',this)">Kiểm Tra &amp; Huỷ Lịch</button>
+    <button class="tab" id="tab-queue" onclick="go('queue',this)">Hàng Chờ</button>
+    <button class="tab" id="tab-manage" onclick="go('manage',this)">Quản Lý</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- PAGE: ĐẶT LỊCH -->
+<div class="page on" id="page-book">
+  <div class="section">
+    <div class="divider">◈</div>
+    <div class="sec-title">Đăng Ký Lượt Chụp</div>
+    <div class="fgroup">
+      <label class="flabel">Họ &amp; Tên</label>
+      <input class="finput" id="bName" type="text" placeholder="Nhập họ và tên..."/>
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Số Điện Thoại</label>
+      <input class="finput" id="bPhone" type="tel" placeholder="Nhập số điện thoại..."/>
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Chọn Phòng Chụp</label>
+      <div class="select-wrap">
+        <select class="fselect" id="bRoom">
+          <option value="">— Chọn phòng —</option>
+          <option value="R1">Phòng 1 – Star Light</option>
+          <option value="R2">Phòng 2 – Heart Garden</option>
+          <option value="R3">Phòng 3 – Red Cherry</option>
+        </select>
+      </div>
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Hình Thức Thanh Toán</label>
+      <div class="pay-row">
+        <button class="pay-opt on" id="pay-cash" onclick="setPay('cash')">
+          <span class="icon">💵</span><span>Tiền mặt</span>
+        </button>
+        <button class="pay-opt" id="pay-ck" onclick="setPay('ck')">
+          <span class="icon">📱</span><span>Chuyển khoản</span>
+        </button>
+      </div>
+    </div>
+    <button class="btn-main" id="bookBtn" onclick="doBook()">✦ Lấy Số Thứ Tự</button>
+    <div class="ticket-card" id="ticketResult">
+      <div class="ticket-micro">đăng ký thành công</div>
+      <div class="ticket-icon">⏳</div>
+      <div class="ticket-micro" style="margin-bottom:6px">số thứ tự của bạn</div>
+      <div class="ticket-num" id="tNum">—</div>
+      <div class="ticket-room" id="tRoom">—</div>
+      <div class="pay-notice">
+        💳 Vui lòng thanh toán để xác nhận số của bạn nhé!<br>
+        Số thứ tự sẽ được cấp sau khi nhân viên xác nhận thanh toán.
+      </div>
+      <div class="wait-info" id="tWait"></div>
+      <button class="btn-out" onclick="resetBook()">← Đăng Ký Thêm</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: KIỂM TRA -->
+<div class="page" id="page-check">
+  <div class="section">
+    <div class="divider">◈</div>
+    <div class="sec-title">Kiểm Tra &amp; Huỷ Lịch</div>
+    <div class="sec-note">
+      Nhập số điện thoại đã đăng ký để xem số thứ tự của bạn.<br>
+      Nếu muốn huỷ lịch, bấm nút <strong>✕ Huỷ Lượt</strong> sau khi tra cứu.
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Số Điện Thoại</label>
+      <input class="finput" id="cPhone" type="tel" placeholder="Nhập số điện thoại..." onkeydown="if(event.key==='Enter')doCheck()"/>
+    </div>
+    <div class="err-msg" id="cErr">Không tìm thấy số điện thoại này trong hàng chờ.</div>
+    <button class="btn-main" onclick="doCheck()">Kiểm Tra</button>
+    <div class="lookup-card" id="lookupCard">
+      <div class="ticket-micro" style="margin-bottom:6px">số thứ tự của bạn</div>
+      <div class="lookup-num" id="lNum">—</div>
+      <div class="lookup-info" id="lInfo">—</div>
+      <div class="lookup-stats">
+        <div class="ls-item">
+          <div class="ls-val" id="lServing">—</div>
+          <div class="ls-label">Số đang phục vụ</div>
+        </div>
+        <div class="ls-item">
+          <div class="ls-val" id="lWait">—</div>
+          <div class="ls-label">Bạn còn chờ</div>
+        </div>
+      </div>
+      <div class="lookup-btns">
+        <button class="btn-del" onclick="askCancel()">✕ Huỷ Lượt Của Tôi</button>
+        <button class="btn-out" onclick="toggleCR()">⇄ Yêu Cầu Đổi Phòng</button>
+      </div>
+      <div class="cr-panel" id="crPanel">
+        <label class="flabel">Chọn phòng muốn đổi sang</label>
+        <div class="select-wrap">
+          <select class="fselect" id="crSelect">
+            <option value="">— Chọn phòng —</option>
+            <option value="R1">Phòng 1 – Star Light</option>
+            <option value="R2">Phòng 2 – Heart Garden</option>
+            <option value="R3">Phòng 3 – Red Cherry</option>
+          </select>
+        </div>
+        <div class="cr-btns">
+          <button class="btn-out" style="margin-top:0;flex:1" onclick="toggleCR()">← Huỷ</button>
+          <button class="btn-main" style="margin-top:0;flex:2" onclick="doChangeRoom()">Xác Nhận Đổi Phòng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: HÀNG CHỜ -->
+<div class="page" id="page-queue">
+  <div class="section">
+    <div class="divider">◈</div>
+    <div id="queueView"><div class="spinner-wrap"><div class="spinner"></div>Đang tải...</div></div>
+  </div>
+</div>
+
+<!-- PAGE: QUẢN LÝ -->
+<div class="page" id="page-manage">
+  <div class="section" id="manageArea" style="display:none">
+    <div id="rmCards"></div>
+    <div style="margin-top:24px">
+      <div class="divider">◈</div>
+      <div class="log-title">Lịch Sử Huỷ Lịch Hôm Nay</div>
+      <div id="cancelLog"><div class="q-empty">Chưa có lượt huỷ nào hôm nay.</div></div>
+    </div>
+    <div style="margin-top:24px">
+      <div class="divider">📊</div>
+      <div class="stats-lock-box" id="statsLock">
+        <div class="stats-icon">📊</div>
+        <div class="sec-title" style="font-size:16px;margin-bottom:14px">NHẬP MẬT KHẨU ĐỂ XEM THỐNG KÊ</div>
+        <div class="modal-err" id="sPassErr" style="margin-bottom:8px">Mật khẩu không đúng.</div>
+        <input type="password" class="finput" id="sPass" placeholder="Mật khẩu..." onkeydown="if(event.key==='Enter')unlockStats()"/>
+        <button class="btn-main" onclick="unlockStats()">Xem Thống Kê</button>
+      </div>
+      <div class="stats-area" id="statsArea">
+        <div class="sec-title" style="margin-bottom:16px">Thống Kê Tổng Quan</div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="filter-bar">
+          <input type="date" class="finput" id="fFrom"/>
+          <input type="date" class="finput" id="fTo"/>
+          <button class="btn-sm" onclick="filterStats()">🔍 Lọc</button>
+          <button class="btn-sm" onclick="exportCSV(false)">📥 Xuất Ngày Đã Lọc</button>
+          <button class="btn-sm" onclick="exportCSV(true)">📥 Xuất Tất Cả</button>
+        </div>
+        <div class="sec-title" style="font-size:17px;margin-bottom:14px">Lịch Sử Theo Ngày</div>
+        <table class="hist-table">
+          <thead><tr><th>STT</th><th>Tên</th><th>SĐT</th><th>Phòng</th><th>Thanh toán</th><th>Giờ</th><th>Trạng thái</th></tr></thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import {
+  getFirestore, doc, setDoc, updateDoc, deleteDoc,
+  collection, query, where, orderBy, onSnapshot,
+  runTransaction, serverTimestamp, getDocs
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBN_xB6gyzJoj0cI81q85Jr_fNCTZNkTB8",
+  authDomain: "filmnoir-devgo.firebaseapp.com",
+  projectId: "filmnoir-devgo",
+  storageBucket: "filmnoir-devgo.firebasestorage.app",
+  messagingSenderId: "539218068880",
+  appId: "1:539218068880:web:161231d310ce385f1b1f15"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── CONSTANTS ──
+const PASSWORDS = ['Filmnoir2610','Filmnoir14@'];
+const ROOM_MAP  = {R1:'Phòng 1 – Star Light', R2:'Phòng 2 – Heart Garden', R3:'Phòng 3 – Red Cherry'};
+const ROOMS     = ['R1','R2','R3'];
+const TODAY     = new Date().toISOString().slice(0,10);
+
+// ── STATE ──
+let manageLocked    = true;
+let currentPhone    = null;
+let allTickets      = [];
+let servingMap      = {R1:null, R2:null, R3:null};
+let filteredHistory = [];
+
+// ── LISTENERS ──
+function startListeners(){
+  const tq = query(collection(db,'tickets'), where('date','==',TODAY), orderBy('id','asc'));
+  onSnapshot(tq, snap => {
+    allTickets = snap.docs.map(d => d.data());
+    onDataChange();
+  });
+  onSnapshot(doc(db,'meta','serving'), snap => {
+    servingMap = snap.exists() ? snap.data() : {R1:null,R2:null,R3:null};
+    onDataChange();
+  });
+}
+
+function onDataChange(){
+  const activePage = document.querySelector('.page.on');
+  if(!activePage) return;
+  const id = activePage.id.replace('page-','');
+  if(id==='queue') renderQueue();
+  if(id==='manage' && !manageLocked) renderManage();
+  if(id==='check' && currentPhone) refreshLookup();
+}
+
+startListeners();
+
+// ── NAV ──
+function go(id, btn){
+  if(id==='manage' && manageLocked){
+    document.getElementById('passModal').classList.remove('off');
+    document.getElementById('mPass').value='';
+    document.getElementById('mPassErr').classList.remove('show');
+    setTimeout(()=>document.getElementById('mPass').focus(),80);
+    return;
+  }
+  switchPage(id, btn);
+}
+window.go = go;
+
+function switchPage(id, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  (btn || document.getElementById('tab-'+id)).classList.add('on');
+  if(id==='queue') renderQueue();
+  if(id==='manage'){ document.getElementById('manageArea').style.display='block'; renderManage(); }
+}
+
+// ── PASS MODAL ──
+function verifyPass(){
+  const v = document.getElementById('mPass').value;
+  if(PASSWORDS.includes(v)){
+    document.getElementById('passModal').classList.add('off');
+    manageLocked = false;
+    switchPage('manage', null);
+  } else {
+    document.getElementById('mPassErr').classList.add('show');
+    document.getElementById('mPass').value='';
+    document.getElementById('mPass').focus();
+  }
+}
+window.verifyPass = verifyPass;
+window.cancelPassModal = ()=>document.getElementById('passModal').classList.add('off');
+
+// ── PAYMENT ──
+let payMode = 'cash';
+function setPay(m){
+  payMode = m;
+  document.getElementById('pay-cash').classList.toggle('on', m==='cash');
+  document.getElementById('pay-ck').classList.toggle('on',   m==='ck');
+}
+window.setPay = setPay;
+
+// ── BOOKING ──
+// All tickets: confirmed = false (nhân viên xác nhận hết)
+async function doBook(){
+  const name  = document.getElementById('bName').value.trim();
+  const phone = document.getElementById('bPhone').value.trim();
+  const room  = document.getElementById('bRoom').value;
+  if(!name)  return toast('Vui lòng nhập họ và tên','err');
+  if(!phone) return toast('Vui lòng nhập số điện thoại','err');
+  if(!room)  return toast('Vui lòng chọn phòng chụp','err');
+  const dup = allTickets.find(t=>t.phone===phone && t.status!=='done' && t.status!=='cancelled');
+  if(dup) return toast('Số điện thoại này đã có trong hàng chờ','err');
+
+  const btn = document.getElementById('bookBtn');
+  btn.disabled = true; btn.textContent = 'Đang xử lý...';
+
+  try {
+    const counterRef = doc(db,'meta','counter_'+TODAY);
+    let newId;
+    await runTransaction(db, async tx => {
+      const snap = await tx.get(counterRef);
+      newId = (snap.exists() ? snap.data().value : 0) + 1;
+      tx.set(counterRef, {value: newId});
+    });
+
+    const ticket = {
+      id: newId, name, phone, room, pay: payMode,
+      time: fmtTime(new Date()), date: TODAY,
+      status: 'waiting',
+      confirmed: false,   // tất cả đều cần nhân viên xác nhận
+      createdAt: serverTimestamp()
+    };
+
+    await setDoc(doc(db,'tickets',docId(newId)), ticket);
+
+    const active = activeIn(room);
+    const myPos  = active.filter(t=>t.id < newId).length;
+    document.getElementById('tNum').textContent  = newId;
+    document.getElementById('tRoom').textContent = ROOM_MAP[room];
+    document.getElementById('tWait').textContent = myPos===0 ? 'Bạn là người tiếp theo!' : `Bạn còn ${myPos} lượt trước`;
+    document.getElementById('ticketResult').classList.add('show');
+    toast('Đăng ký thành công!','ok');
+  } catch(e){
+    console.error(e); toast('Lỗi kết nối, thử lại!','err');
+  } finally {
+    btn.disabled = false; btn.textContent = '✦ Lấy Số Thứ Tự';
+  }
+}
+window.doBook = doBook;
+
+function resetBook(){
+  document.getElementById('bName').value='';
+  document.getElementById('bPhone').value='';
+  document.getElementById('bRoom').value='';
+  document.getElementById('ticketResult').classList.remove('show');
+  setPay('cash');
+}
+window.resetBook = resetBook;
+
+// ── CHECK ──
+function doCheck(){
+  const phone = document.getElementById('cPhone').value.trim();
+  if(!phone){ toast('Nhập số điện thoại','err'); return; }
+  const t = findByPhone(phone);
+  if(!t){
+    document.getElementById('cErr').classList.add('show');
+    document.getElementById('lookupCard').classList.remove('show');
+    currentPhone = null; return;
+  }
+  document.getElementById('cErr').classList.remove('show');
+  currentPhone = phone;
+  refreshLookup();
+  document.getElementById('lookupCard').classList.add('show');
+  document.getElementById('crPanel').classList.remove('show');
+}
+window.doCheck = doCheck;
+
+function refreshLookup(){
+  const t = findByPhone(currentPhone);
+  if(!t){ document.getElementById('lookupCard').classList.remove('show'); return; }
+  const active = activeIn(t.room);
+  const myPos  = active.findIndex(x=>x.id===t.id);
+  document.getElementById('lNum').textContent     = t.id;
+  document.getElementById('lInfo').textContent    = t.name+' · '+ROOM_MAP[t.room]+' · '+t.time;
+  document.getElementById('lServing').textContent = servingMap[t.room]||'—';
+  document.getElementById('lWait').textContent    = myPos<=0 ? 'Tiếp theo!' : myPos+' lượt';
+}
+
+function findByPhone(phone){
+  return allTickets.find(t=>t.phone===phone && t.status!=='done' && t.status!=='cancelled')||null;
+}
+
+// ── CANCEL (từ khách) ──
+function askCancel(){
+  const t = findByPhone(currentPhone);
+  if(!t) return;
+  confirm2(`Bạn có chắc muốn huỷ lượt số <strong>${t.id}</strong> – ${t.name}?`, ()=>doCancel(t));
+}
+window.askCancel = askCancel;
+
+async function doCancel(t){
+  try {
+    await updateDoc(doc(db,'tickets',docId(t.id)), {status:'cancelled'});
+    await setDoc(doc(db,'cancelLog',docId(t.id)), {
+      id:t.id, name:t.name, phone:t.phone, room:t.room,
+      time:fmtTime(new Date()), date:TODAY, cancelledAt:serverTimestamp()
+    });
+    document.getElementById('lookupCard').classList.remove('show');
+    document.getElementById('cPhone').value='';
+    currentPhone = null;
+    toast('Đã huỷ lượt thành công','ok');
+  } catch(e){ toast('Lỗi kết nối, thử lại!','err'); }
+}
+
+// ── CHANGE ROOM ──
+function toggleCR(){ document.getElementById('crPanel').classList.toggle('show'); }
+window.toggleCR = toggleCR;
+
+async function doChangeRoom(){
+  const newRoom = document.getElementById('crSelect').value;
+  if(!newRoom){ toast('Chọn phòng muốn đổi','err'); return; }
+  const t = findByPhone(currentPhone);
+  if(!t) return;
+  if(t.room===newRoom){ toast('Đây đã là phòng của bạn','err'); return; }
+  try {
+    await updateDoc(doc(db,'tickets',docId(t.id)), {room: newRoom});
+    document.getElementById('crPanel').classList.remove('show');
+    document.getElementById('crSelect').value='';
+    toast('Đã đổi sang '+ROOM_MAP[newRoom],'ok');
+  } catch(e){ toast('Lỗi kết nối','err'); }
+}
+window.doChangeRoom = doChangeRoom;
+
+// ── HELPERS ──
+function activeIn(room){
+  return allTickets.filter(t=>t.room===room && t.status!=='done' && t.status!=='cancelled').sort((a,b)=>a.id-b.id);
+}
+function docId(id){ return `${TODAY}_${String(id).padStart(6,'0')}`; }
+
+// ── QUEUE RENDER ──
+function renderQueue(){
+  let html='';
+  ROOMS.forEach((r,i)=>{
+    const active  = activeIn(r);
+    const serving = servingMap[r];
+    html+=`<div class="room-block">
+      <div class="room-header">
+        <div class="room-name">${ROOM_MAP[r]}</div>
+        ${serving?`<div class="now-chip">Đang phục vụ: ${serving}</div>`:''}
+      </div>`;
+    if(!active.length){
+      html+='<div class="q-empty">Hàng chờ trống</div>';
+    } else {
+      active.forEach(t=>{
+        const isServ = t.id===serving;
+        // badge: đang phục vụ / đang chờ / chờ xác nhận
+        const [bc,bl] = isServ ? ['b-serve','Đang phục vụ'] : t.confirmed ? ['b-wait','Đang chờ'] : ['b-pending','Chờ xác nhận'];
+        html+=`<div class="q-row">
+          <div class="q-num">${t.id}</div>
+          <div class="q-body">
+            <div class="q-name">${esc(t.name)}</div>
+            <div class="q-meta">${t.time}</div>
+          </div>
+          <div class="q-badge ${bc}">${bl}</div>
+        </div>`;
+      });
+    }
+    html+='</div>';
+    if(i<ROOMS.length-1) html+='<div class="divider" style="margin:18px 0">◈</div>';
+  });
+  document.getElementById('queueView').innerHTML = html;
+}
+
+// ── MANAGE RENDER ──
+async function renderManage(){
+  let html='';
+  ROOMS.forEach(r=>{
+    const active  = activeIn(r);
+    const serving = servingMap[r];
+    html+=`<div class="manage-room">
+      <div class="manage-room-head">
+        <div class="manage-room-name">${ROOM_MAP[r]}</div>
+        ${serving?`<div class="now-chip">${serving}</div>`:'<div style="color:var(--text3);font-size:11px">—</div>'}
+      </div>
+      <div class="manage-room-body">`;
+    if(!active.length){
+      html+='<div class="q-empty" style="padding:10px 0">Hàng chờ trống</div>';
+    } else {
+      active.forEach(t=>{
+        const isServ = t.id===serving;
+        html+=`<div class="manage-q-row">
+          <div class="manage-q-num">${t.id}</div>
+          <div class="manage-q-body">
+            <div class="manage-q-name">${esc(t.name)}</div>
+            <div class="manage-q-meta">${t.phone} · ${t.pay==='cash'?'💵 Tiền mặt':'📱 Chuyển khoản'} · ${t.time}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+            ${!t.confirmed ? `<button class="btn-red-sm" onclick="confirmPay(${t.id},'${r}')">✓ Xác nhận</button>` : ''}
+            ${isServ ? '<div class="q-badge b-serve" style="font-size:9px">Đang phục vụ</div>' : ''}
+            <button class="btn-del" style="padding:6px 10px" onclick="deleteTicket(${t.id},'${r}')">✕</button>
+          </div>
+        </div>`;
+      });
+    }
+    html+=`<div class="manage-actions">
+      <button class="btn-serve" onclick="serveNext('${r}')">→ Phục Vụ Số Tiếp Theo</button>
+      <button class="btn-reset" onclick="askReset('${r}')">↺ Reset Phòng Này</button>
+    </div></div></div>`;
+  });
+  document.getElementById('rmCards').innerHTML = html;
+
+  // Cancel log
+  const logEl = document.getElementById('cancelLog');
+  try {
+    const snap = await getDocs(query(collection(db,'cancelLog'), where('date','==',TODAY), orderBy('cancelledAt','desc')));
+    logEl.innerHTML = snap.empty
+      ? '<div class="q-empty">Chưa có lượt huỷ nào hôm nay.</div>'
+      : snap.docs.map(d=>{ const c=d.data(); return `
+        <div class="log-item">
+          <div class="log-left"><strong>${c.id}</strong> · ${esc(c.name)} · ${c.phone}</div>
+          <div class="log-right">${(ROOM_MAP[c.room]||c.room).split('–')[1]?.trim()||''}<br>${c.time}</div>
+        </div>`; }).join('');
+  } catch(e){ logEl.innerHTML='<div class="q-empty">Lỗi tải dữ liệu.</div>'; }
+
+  if(document.getElementById('statsArea').classList.contains('show')) renderStats(allTickets);
+}
+
+// Xác nhận thanh toán
+window.confirmPay = async function(id, room){
+  try {
+    await updateDoc(doc(db,'tickets',docId(id)), {confirmed:true});
+    toast('Đã xác nhận thanh toán','ok');
+  } catch(e){ toast('Lỗi kết nối','err'); }
+};
+
+// Xoá lượt từ tab quản lý
+window.deleteTicket = function(id, room){
+  confirm2(`Xoá lượt số <strong>${id}</strong> khỏi hàng chờ?`, async ()=>{
+    try {
+      // Lưu vào cancel log trước
+      const t = allTickets.find(x=>x.id===id);
+      if(t){
+        await setDoc(doc(db,'cancelLog',docId(id)), {
+          id:t.id, name:t.name, phone:t.phone, room:t.room,
+          time:fmtTime(new Date()), date:TODAY, cancelledAt:serverTimestamp()
+        });
+      }
+      await updateDoc(doc(db,'tickets',docId(id)), {status:'cancelled'});
+      // Nếu đang phục vụ số này thì clear
+      if(servingMap[room]===id){
+        await setDoc(doc(db,'meta','serving'), {...servingMap,[room]:null},{merge:true});
+      }
+      toast('Đã xoá lượt','ok');
+    } catch(e){ toast('Lỗi kết nối','err'); }
+  });
+};
+
+// Phục vụ tiếp theo — mark current as done (biến mất), chuyển next lên
+window.serveNext = async function(room){
+  const curId = servingMap[room];
+  const waiting = activeIn(room).filter(t=>t.confirmed && t.id !== curId);
+  if(!waiting.length){
+    if(curId){
+      try {
+        await updateDoc(doc(db,'tickets',docId(curId)), {status:'done'});
+        await setDoc(doc(db,'meta','serving'), {...servingMap,[room]:null},{merge:true});
+        toast('Đã hoàn thành lượt cuối trong phòng','ok');
+      } catch(e){ toast('Lỗi kết nối','err'); }
+    } else {
+      toast('Không có lượt nào trong hàng chờ','err');
+    }
+    return;
+  }
+  const next = waiting[0];
+  try {
+    if(curId) await updateDoc(doc(db,'tickets',docId(curId)), {status:'done'});
+    await updateDoc(doc(db,'tickets',docId(next.id)), {status:'serving'});
+    await setDoc(doc(db,'meta','serving'), {...servingMap,[room]:next.id},{merge:true});
+    toast(`Đang phục vụ số ${next.id} – ${next.name}`,'ok');
+  } catch(e){ toast('Lỗi kết nối','err'); }
+};
+
+// Reset phòng
+window.askReset = function(room){
+  confirm2(`Reset toàn bộ hàng chờ <strong>${ROOM_MAP[room]}</strong>?`, async ()=>{
+    try {
+      const toCancel = allTickets.filter(t=>t.room===room && t.status!=='done' && t.status!=='cancelled');
+      await Promise.all(toCancel.map(t=>updateDoc(doc(db,'tickets',docId(t.id)),{status:'cancelled'})));
+      await setDoc(doc(db,'meta','serving'),{...servingMap,[room]:null},{merge:true});
+      toast('Đã reset '+ROOM_MAP[room],'ok');
+    } catch(e){ toast('Lỗi kết nối','err'); }
+  });
+};
+
+// ── STATS ──
+window.unlockStats = function(){
+  const v = document.getElementById('sPass').value;
+  if(PASSWORDS.includes(v)){
+    document.getElementById('statsLock').style.display='none';
+    document.getElementById('statsArea').classList.add('show');
+    renderStats(allTickets);
+  } else {
+    document.getElementById('sPassErr').classList.add('show');
+    document.getElementById('sPass').value='';
+  }
+};
+
+async function renderStats(data){
+  filteredHistory = data;
+  const tot  = data.length;
+  const done = data.filter(x=>x.status==='done'||x.status==='serving').length;
+  const canc = data.filter(x=>x.status==='cancelled').length;
+  const cash = data.filter(x=>x.pay==='cash').length;
+
+  // Tính khách cũ/mới dựa trên SĐT xuất hiện nhiều hơn 1 lần trong TOÀN BỘ lịch sử
+  let allHistSnap, allHistData = [];
+  try {
+    allHistSnap = await getDocs(collection(db,'tickets'));
+    allHistData = allHistSnap.docs.map(d=>d.data()).filter(t=>t.status!=='cancelled');
+  } catch(e){}
+
+  // Đếm tần suất SĐT toàn thời gian
+  const phoneCounts = {};
+  allHistData.forEach(t=>{ phoneCounts[t.phone] = (phoneCounts[t.phone]||0) + 1; });
+
+  // Trong data hiện tại, phone xuất hiện >1 lần toàn lịch sử = khách cũ
+  const uniquePhones = [...new Set(data.map(t=>t.phone))];
+  const returning = uniquePhones.filter(p=>(phoneCounts[p]||0) > 1).length;
+  const newCust   = uniquePhones.length - returning;
+  const retPct    = uniquePhones.length ? Math.round(returning/uniquePhones.length*100) : 0;
+  const newPct    = 100 - retPct;
+
+  // Thống kê toàn thời gian
+  const totalEver  = allHistData.length;
+  const doneEver   = allHistData.filter(x=>x.status==='done'||x.status==='serving').length;
+
+  // Thống kê tháng này
+  const thisMonth  = new Date().toISOString().slice(0,7);
+  const monthData  = allHistData.filter(t=>(t.date||'').startsWith(thisMonth));
+  const monthDone  = monthData.filter(x=>x.status==='done'||x.status==='serving').length;
+
+  document.getElementById('statsGrid').innerHTML=\`
+    <div class="stats-section-title" style="grid-column:1/-1">Hôm nay</div>
+    <div class="stat-box"><div class="stat-val">\${tot}</div><div class="stat-lbl">Tổng lượt</div></div>
+    <div class="stat-box"><div class="stat-val">\${done}</div><div class="stat-lbl">Đã phục vụ</div></div>
+    <div class="stat-box" style="grid-column:1/-1;display:flex;gap:12px;align-items:center;padding:12px 14px">
+      <div style="flex:1">
+        <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-weight:600;margin-bottom:6px">Khách mới / Khách cũ</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
+          <span style="font-size:11px;color:var(--text2)">Mới:</span>
+          <span style="font-size:16px;font-family:'Cormorant Garamond',serif;color:var(--red)">\${newCust}</span>
+          <span style="font-size:11px;color:var(--text3)">(\${newPct}%)</span>
+          <span style="margin-left:10px;font-size:11px;color:var(--text2)">Cũ:</span>
+          <span style="font-size:16px;font-family:'Cormorant Garamond',serif;color:var(--red)">\${returning}</span>
+          <span style="font-size:11px;color:var(--text3)">(\${retPct}%)</span>
+        </div>
+        <div class="stat-bar">
+          <div class="stat-bar-fill" style="width:\${newPct}%;opacity:0.5;display:inline-block"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:9px;color:var(--text3)">
+          <span style="color:var(--red);opacity:0.6">■ Mới \${newPct}%</span>
+          <span style="color:var(--red)">■ Cũ \${retPct}%</span>
+        </div>
+      </div>
+    </div>
+    <div class="stats-section-title" style="grid-column:1/-1">Tháng này (\${thisMonth})</div>
+    <div class="stat-box"><div class="stat-val">\${monthData.length}</div><div class="stat-lbl">Tổng lượt</div></div>
+    <div class="stat-box"><div class="stat-val">\${monthDone}</div><div class="stat-lbl">Đã phục vụ</div></div>
+    <div class="stats-section-title" style="grid-column:1/-1">Toàn thời gian</div>
+    <div class="stat-box"><div class="stat-val">\${totalEver}</div><div class="stat-lbl">Tổng lượt</div></div>
+    <div class="stat-box"><div class="stat-val">\${doneEver}</div><div class="stat-lbl">Đã phục vụ</div></div>
+  \`;
+  const tbody = document.getElementById('histBody');
+  if(!data.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">Chưa có dữ liệu</td></tr>'; return; }
+  tbody.innerHTML = [...data].sort((a,b)=>b.id-a.id).map(t=>`
+    <tr>
+      <td>${t.id}</td><td>${esc(t.name)}</td>
+      <td>${t.phone}</td>
+      <td>${(ROOM_MAP[t.room]||t.room).split('–')[1]?.trim()||t.room}</td>
+      <td>${t.pay==='cash'?'💵 Tiền mặt':'📱 Chuyển khoản'}</td>
+      <td>${t.time}</td>
+      <td><span class="q-badge ${t.status==='cancelled'?'b-pending':t.status==='done'||t.status==='serving'?'b-serve':'b-wait'}">${
+        t.status==='cancelled'?'Đã huỷ':t.status==='done'?'Hoàn thành':t.status==='serving'?'Đang phục vụ':'Đang chờ'
+      }</span></td>
+    </tr>`).join('');
+}
+
+window.filterStats = function(){
+  const from=document.getElementById('fFrom').value, to=document.getElementById('fTo').value;
+  let data = allTickets;
+  if(from) data=data.filter(t=>t.date>=from);
+  if(to)   data=data.filter(t=>t.date<=to);
+  renderStats(data); toast('Đã lọc','ok');
+};
+
+window.exportCSV = function(all){
+  const data = all ? allTickets : filteredHistory;
+  const rows = [['STT','Tên','SĐT','Phòng','Thanh toán','Giờ','Ngày','Trạng thái'],
+    ...data.map(t=>[t.id,t.name,t.phone,ROOM_MAP[t.room]||t.room,
+      t.pay==='cash'?'Tiền mặt':'Chuyển khoản',t.time,t.date||TODAY,
+      t.status==='cancelled'?'Đã huỷ':t.status==='done'?'Hoàn thành':t.status==='serving'?'Đang phục vụ':'Đang chờ'])
+  ];
+  const csv  = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`filmnoir_${TODAY}.csv`; a.click();
+  toast('Đã xuất CSV','ok');
+};
+
+// ── CONFIRM DIALOG ──
+let _cb=null;
+window.confirm2 = function(txt,cb){ document.getElementById('confirmTxt').innerHTML=txt; document.getElementById('confirmDlg').classList.remove('off'); _cb=cb; };
+window.confirmYes = function(){ document.getElementById('confirmDlg').classList.add('off'); if(_cb)_cb(); _cb=null; };
+window.confirmNo  = function(){ document.getElementById('confirmDlg').classList.add('off'); _cb=null; };
+
+// ── TOAST ──
+let _tt;
+function toast(msg,type=''){ const el=document.getElementById('T'); el.textContent=msg; el.className='toast on '+(type||''); clearTimeout(_tt); _tt=setTimeout(()=>el.className='toast',2800); }
+
+// ── UTILS ──
+function fmtTime(d){ return d.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
