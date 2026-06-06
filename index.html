@@ -809,104 +809,185 @@ window.askReset = function(room){
 };
 
 // ── STATS ──
-window.unlockStats = function(){
+window.unlockStats = async function(){
   const v = document.getElementById('sPass').value;
   if(PASSWORDS.includes(v)){
     document.getElementById('statsLock').style.display='none';
     document.getElementById('statsArea').classList.add('show');
-    renderStats(allTickets);
+    // Mặc định hiện hôm nay
+    const todayData = allTickets; // allTickets đã là hôm nay từ listener
+    renderStats(todayData);
   } else {
     document.getElementById('sPassErr').classList.add('show');
     document.getElementById('sPass').value='';
   }
 };
 
+// Cache toàn bộ lịch sử từ Firestore (load 1 lần khi mở stats)
+let allHistoryCache = null;
+
+async function loadAllHistory(){
+  if(allHistoryCache) return allHistoryCache;
+  try {
+    const snap = await getDocs(collection(db,'tickets'));
+    allHistoryCache = snap.docs.map(d=>d.data());
+  } catch(e){ allHistoryCache = []; }
+  return allHistoryCache;
+}
+
 async function renderStats(data){
+  // data = dữ liệu đã lọc (theo ngày) để hiện bảng lịch sử
   filteredHistory = data;
-  const tot  = data.length;
+
+  // Load toàn bộ lịch sử để tính thống kê tổng quan
+  const allHist = await loadAllHistory();
+  const allNonCanc = allHist.filter(t=>t.status!=='cancelled');
+
+  // === TỔNG QUAN theo khoảng lọc ===
+  const tot  = data.length;  // tổng lượt đăng ký (cả đã phục vụ + hủy)
   const done = data.filter(x=>x.status==='done'||x.status==='serving').length;
   const canc = data.filter(x=>x.status==='cancelled').length;
-  const cash = data.filter(x=>x.pay==='cash').length;
 
-  // Tính khách cũ/mới dựa trên SĐT xuất hiện nhiều hơn 1 lần trong TOÀN BỘ lịch sử
-  let allHistSnap, allHistData = [];
-  try {
-    allHistSnap = await getDocs(collection(db,'tickets'));
-    allHistData = allHistSnap.docs.map(d=>d.data()).filter(t=>t.status!=='cancelled');
-  } catch(e){}
+  // Khách cũ/mới: dựa trên SĐT trong data lọc, so với TOÀN BỘ lịch sử
+  const phoneCountsAll = {};
+  allHist.forEach(t=>{ phoneCountsAll[t.phone] = (phoneCountsAll[t.phone]||0) + 1; });
+  const uniquePhonesFiltered = [...new Set(data.map(t=>t.phone))];
+  const returningF = uniquePhonesFiltered.filter(p=>(phoneCountsAll[p]||0) > 1).length;
+  const newCustF   = uniquePhonesFiltered.length - returningF;
+  const retPctF    = uniquePhonesFiltered.length ? Math.round(returningF/uniquePhonesFiltered.length*100) : 0;
+  const newPctF    = 100 - retPctF;
 
-  // Đếm tần suất SĐT toàn thời gian
-  const phoneCounts = {};
-  allHistData.forEach(t=>{ phoneCounts[t.phone] = (phoneCounts[t.phone]||0) + 1; });
+  // === THÁNG NÀY ===
+  const thisMonth = new Date().toISOString().slice(0,7);
+  const monthData = allHist.filter(t=>(t.date||'').startsWith(thisMonth));
+  const monthTot  = monthData.length;
+  const monthDone = monthData.filter(x=>x.status==='done'||x.status==='serving').length;
+  const monthCanc = monthData.filter(x=>x.status==='cancelled').length;
+  const uniquePhonesMonth = [...new Set(monthData.map(t=>t.phone))];
+  const returningM = uniquePhonesMonth.filter(p=>(phoneCountsAll[p]||0) > 1).length;
+  const newCustM   = uniquePhonesMonth.length - returningM;
+  const retPctM    = uniquePhonesMonth.length ? Math.round(returningM/uniquePhonesMonth.length*100) : 0;
+  const newPctM    = 100 - retPctM;
 
-  // Trong data hiện tại, phone xuất hiện >1 lần toàn lịch sử = khách cũ
-  const uniquePhones = [...new Set(data.map(t=>t.phone))];
-  const returning = uniquePhones.filter(p=>(phoneCounts[p]||0) > 1).length;
-  const newCust   = uniquePhones.length - returning;
-  const retPct    = uniquePhones.length ? Math.round(returning/uniquePhones.length*100) : 0;
-  const newPct    = 100 - retPct;
+  // === TOÀN THỜI GIAN ===
+  const totalEver = allHist.length;
+  const doneEver  = allHist.filter(x=>x.status==='done'||x.status==='serving').length;
+  const cancEver  = allHist.filter(x=>x.status==='cancelled').length;
+  const uniquePhonesEver = [...new Set(allHist.map(t=>t.phone))];
+  const returningE = uniquePhonesEver.filter(p=>(phoneCountsAll[p]||0) > 1).length;
+  const newCustE   = uniquePhonesEver.length - returningE;
+  const retPctE    = uniquePhonesEver.length ? Math.round(returningE/uniquePhonesEver.length*100) : 0;
+  const newPctE    = 100 - retPctE;
 
-  // Thống kê toàn thời gian
-  const totalEver  = allHistData.length;
-  const doneEver   = allHistData.filter(x=>x.status==='done'||x.status==='serving').length;
+  function custBar(nPct, rPct){ return `
+    <div style="display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:5px">
+      <div style="width:${nPct}%;background:var(--red);opacity:0.45"></div>
+      <div style="width:${rPct}%;background:var(--red)"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:9px">
+      <span style="color:var(--red);opacity:0.6">■ Mới ${nPct}%</span>
+      <span style="color:var(--red)">■ Cũ ${rPct}%</span>
+    </div>`; }
 
-  // Thống kê tháng này
-  const thisMonth  = new Date().toISOString().slice(0,7);
-  const monthData  = allHistData.filter(t=>(t.date||'').startsWith(thisMonth));
-  const monthDone  = monthData.filter(x=>x.status==='done'||x.status==='serving').length;
+  function custRow(nc, ret, nPct, rPct){ return `
+    <div style="display:flex;gap:14px;font-size:11px;margin-top:4px">
+      <span style="color:var(--text2)">Mới: <strong style="color:var(--red);font-family:'Cormorant Garamond',serif;font-size:15px">${nc}</strong></span>
+      <span style="color:var(--text2)">Cũ: <strong style="color:var(--red);font-family:'Cormorant Garamond',serif;font-size:15px">${ret}</strong></span>
+    </div>
+    ${custBar(nPct,rPct)}`; }
+
+  const rangeLabel = document.getElementById('fFrom').value || document.getElementById('fTo').value
+    ? `${document.getElementById('fFrom').value||'...'} → ${document.getElementById('fTo').value||'...'}`
+    : 'Hôm nay (' + TODAY + ')';
 
   document.getElementById('statsGrid').innerHTML=`
-    <div class="stats-section-title" style="grid-column:1/-1">Hôm nay</div>
-    <div class="stat-box"><div class="stat-val">${tot}</div><div class="stat-lbl">Tổng lượt</div></div>
-    <div class="stat-box"><div class="stat-val">${done}</div><div class="stat-lbl">Đã phục vụ</div></div>
-    <div class="stat-box" style="grid-column:1/-1;display:flex;gap:12px;align-items:center;padding:12px 14px">
-      <div style="flex:1">
-        <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);font-weight:600;margin-bottom:6px">Khách mới / Khách cũ</div>
-        <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
-          <span style="font-size:11px;color:var(--text2)">Mới:</span>
-          <span style="font-size:16px;font-family:'Cormorant Garamond',serif;color:var(--red)">${newCust}</span>
-          <span style="font-size:11px;color:var(--text3)">(${newPct}%)</span>
-          <span style="margin-left:10px;font-size:11px;color:var(--text2)">Cũ:</span>
-          <span style="font-size:16px;font-family:'Cormorant Garamond',serif;color:var(--red)">${returning}</span>
-          <span style="font-size:11px;color:var(--text3)">(${retPct}%)</span>
-        </div>
-        <div class="stat-bar">
-          <div class="stat-bar-fill" style="width:${newPct}%;opacity:0.5;display:inline-block"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:9px;color:var(--text3)">
-          <span style="color:var(--red);opacity:0.6">■ Mới ${newPct}%</span>
-          <span style="color:var(--red)">■ Cũ ${retPct}%</span>
-        </div>
-      </div>
+    <div class="stats-section-title" style="grid-column:1/-1">${rangeLabel}</div>
+    <div class="stat-box">
+      <div class="stat-val">${tot}</div>
+      <div class="stat-lbl">Tổng lượt đăng ký</div>
+      <div class="stat-sub" style="font-size:9px;color:var(--text3);margin-top:2px">(gồm phục vụ + huỷ)</div>
     </div>
+    <div class="stat-box">
+      <div class="stat-val">${done}</div>
+      <div class="stat-lbl">Đã phục vụ</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">${canc}</div>
+      <div class="stat-lbl">Đã huỷ</div>
+    </div>
+    <div class="stat-box" style="grid-column:1/-1">
+      <div class="stat-lbl" style="text-align:left;margin-bottom:2px">Khách mới / Khách cũ</div>
+      ${custRow(newCustF, returningF, newPctF, retPctF)}
+    </div>
+
     <div class="stats-section-title" style="grid-column:1/-1">Tháng này (${thisMonth})</div>
-    <div class="stat-box"><div class="stat-val">${monthData.length}</div><div class="stat-lbl">Tổng lượt</div></div>
-    <div class="stat-box"><div class="stat-val">${monthDone}</div><div class="stat-lbl">Đã phục vụ</div></div>
+    <div class="stat-box">
+      <div class="stat-val">${monthTot}</div>
+      <div class="stat-lbl">Tổng lượt đăng ký</div>
+      <div class="stat-sub" style="font-size:9px;color:var(--text3);margin-top:2px">(gồm phục vụ + huỷ)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">${monthDone}</div>
+      <div class="stat-lbl">Đã phục vụ</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">${monthCanc}</div>
+      <div class="stat-lbl">Đã huỷ</div>
+    </div>
+    <div class="stat-box" style="grid-column:1/-1">
+      <div class="stat-lbl" style="text-align:left;margin-bottom:2px">Khách mới / Khách cũ</div>
+      ${custRow(newCustM, returningM, newPctM, retPctM)}
+    </div>
+
     <div class="stats-section-title" style="grid-column:1/-1">Toàn thời gian</div>
-    <div class="stat-box"><div class="stat-val">${totalEver}</div><div class="stat-lbl">Tổng lượt</div></div>
-    <div class="stat-box"><div class="stat-val">${doneEver}</div><div class="stat-lbl">Đã phục vụ</div></div>
+    <div class="stat-box">
+      <div class="stat-val">${totalEver}</div>
+      <div class="stat-lbl">Tổng lượt đăng ký</div>
+      <div class="stat-sub" style="font-size:9px;color:var(--text3);margin-top:2px">(gồm phục vụ + huỷ)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">${doneEver}</div>
+      <div class="stat-lbl">Đã phục vụ</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">${cancEver}</div>
+      <div class="stat-lbl">Đã huỷ</div>
+    </div>
+    <div class="stat-box" style="grid-column:1/-1">
+      <div class="stat-lbl" style="text-align:left;margin-bottom:2px">Khách mới / Khách cũ</div>
+      ${custRow(newCustE, returningE, newPctE, retPctE)}
+    </div>
   `;
+
+  // Bảng lịch sử theo data đã lọc
   const tbody = document.getElementById('histBody');
-  if(!data.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">Chưa có dữ liệu</td></tr>'; return; }
-  tbody.innerHTML = [...data].sort((a,b)=>b.id-a.id).map(t=>`
+  if(!data.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">Chưa có dữ liệu trong khoảng này</td></tr>'; return; }
+  tbody.innerHTML = [...data].sort((a,b)=>{
+    if(b.date!==a.date) return (b.date||'').localeCompare(a.date||'');
+    return b.id - a.id;
+  }).map(t=>`
     <tr>
       <td>${t.id}</td><td>${esc(t.name)}</td>
       <td>${t.phone}</td>
       <td>${(ROOM_MAP[t.room]||t.room).split('–')[1]?.trim()||t.room}</td>
       <td>${t.pay==='cash'?'💵 Tiền mặt':'📱 Chuyển khoản'}</td>
-      <td>${t.time}</td>
+      <td>${t.date||TODAY} ${t.time}</td>
       <td><span class="q-badge ${t.status==='cancelled'?'b-pending':t.status==='done'||t.status==='serving'?'b-serve':'b-wait'}">${
         t.status==='cancelled'?'Đã huỷ':t.status==='done'?'Hoàn thành':t.status==='serving'?'Đang phục vụ':'Đang chờ'
       }</span></td>
     </tr>`).join('');
 }
 
-window.filterStats = function(){
+window.filterStats = async function(){
   const from=document.getElementById('fFrom').value, to=document.getElementById('fTo').value;
-  let data = allTickets;
-  if(from) data=data.filter(t=>t.date>=from);
-  if(to)   data=data.filter(t=>t.date<=to);
-  renderStats(data); toast('Đã lọc','ok');
+  // Load ALL tickets từ Firestore (không chỉ hôm nay)
+  allHistoryCache = null; // reset cache để load mới
+  const allHist = await loadAllHistory();
+  let data = allHist;
+  if(from) data=data.filter(t=>(t.date||'')>=from);
+  if(to)   data=data.filter(t=>(t.date||'')<=to);
+  if(!from && !to) data = allHist.filter(t=>t.date===TODAY); // mặc định hôm nay
+  renderStats(data); toast('Đã lọc dữ liệu','ok');
 };
 
 window.exportCSV = function(all){
